@@ -273,6 +273,7 @@ impl Builder {
 
         #[cfg(feature = "es_modules")]
         {
+            web_sys::console::log_1(&"calling load_module_workers_polyfill".into());
             load_module_workers_polyfill();
             options.type_(WorkerType::Module);
         }
@@ -299,7 +300,14 @@ impl Builder {
             };
         }) as Box<dyn FnMut(&web_sys::MessageEvent)>);
         worker.set_onmessage(Some(callback.as_ref().unchecked_ref()));
+
         callback.forget();
+
+        let error_callback = Closure::wrap(Box::new(move |x: &web_sys::Event| {
+            web_sys::console::log_2(&"thread error!".into(), &x);
+        }) as Box<dyn FnMut(&web_sys::Event)>);
+        worker.set_onerror(Some(error_callback.as_ref().unchecked_ref()));
+        error_callback.forget();
 
         let ctx_ptr = Box::into_raw(Box::new(ctx));
 
@@ -310,6 +318,7 @@ impl Builder {
         init.push(&JsValue::from(ctx_ptr as u32));
 
         // Send initialization message
+
         worker_reference_callback.set(Some(
             match worker.post_message(&init) {
                 Ok(()) => Ok(worker),
@@ -320,6 +329,7 @@ impl Builder {
             }
             .unwrap(),
         ));
+        web_sys::console::log_1(&"called post_message".into());
     }
 }
 

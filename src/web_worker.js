@@ -1,3 +1,5 @@
+console.log("Pre-init worker: WASM_BINDGEN_SHIM_URL");
+
 // synchronously, using the browser, import wasm_bindgen shim JS scripts
 importScripts('WASM_BINDGEN_SHIM_URL');
 
@@ -6,6 +8,8 @@ importScripts('WASM_BINDGEN_SHIM_URL');
 // `importScripts`.
 self.onmessage = event => {
     let [ module, memory, work ] = event.data;
+
+    console.log("onmessage call");
 
     wasm_bindgen(module, memory).catch(err => {
         console.log(err);
@@ -17,6 +21,8 @@ self.onmessage = event => {
         // Rethrow to keep promise rejected and prevent execution of further commands:
         throw err;
     }).then(wasm => {
+        console.log("calling wasm_thread_entry_point");
+
         // Enter rust code by calling entry point defined in `lib.rs`.
         // This executes closure defined by work context.
         wasm.wasm_thread_entry_point(work);
